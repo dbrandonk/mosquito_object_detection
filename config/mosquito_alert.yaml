@@ -1,16 +1,16 @@
 # Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
-path: ../data
-train: train.cvs  
-val: test_phase1_v2.csv  
+path: ../data/mosquito_alert_2023
+train: images
+val: images
 test: # no test images (optional)
 
 # Classes
 names:
-  0: aedes aegypti
-  1: aedes albopictus
+  0: aegypti
+  1: albopictus
   2: anopheles
   3: culex
   4: culiseta
-  5: aedes japonicus / aedes koreicus
+  5: japonicus/koreicus
 
 # Add optional download here.

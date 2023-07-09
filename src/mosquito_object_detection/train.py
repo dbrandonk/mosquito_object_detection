@@ -1,6 +1,10 @@
+from pathlib import Path
 from ultralytics import YOLO
 
-# load a pretrained model
-model = YOLO('yolov8n.pt')
+dir_path = Path(__file__).resolve().parent
+# dir_path = os.path.dirname(os.path.abspath(__file__))
 
-# model.train(data='coco128.yaml', epochs=100, imgsz=640)
+# load a pretrained model
+model = YOLO(dir_path / Path('../../checkpoints/yolov8n.pt'))
+
+model.train(data=(dir_path / Path('../../config/mosquito_alert.yaml')), epochs=100, imgsz=640)
