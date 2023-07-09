@@ -5,7 +5,9 @@ from pathlib import Path
 import yaml
 
 package_path = Path(__file__).resolve().parent.parent
-data_path = package_path / Path('data')
+data_parent_path = package_path / Path('data')
+data_path = data_parent_path / Path('mosquito_alert_2023')
+image_path = data_path / Path('images')
 label_path = data_path / Path('labels')
 
 def convert_yolo_format(data_frame, class_mapping):
@@ -42,11 +44,10 @@ def read_csv(file_path):
 
 def format_data_folder():
 
-    clean_data = f'rm -rf {str(data_path)}'
+    clean_data = f'rm -rf {str(data_parent_path)}'
     os.system(clean_data)
 
-    image_path = data_path / Path('images')
-    create_data_dirs = f'mkdir {str(data_path)}; mkdir {str(image_path)}; mkdir {str(label_path)}'
+    create_data_dirs = f'mkdir {str(data_path)} -p; mkdir {str(image_path)}; mkdir {str(label_path)}'
     os.system(create_data_dirs)
 
 def get_data(api_key):
