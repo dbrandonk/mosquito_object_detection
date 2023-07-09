@@ -3,6 +3,7 @@ import os
 import argparse
 from pathlib import Path
 import yaml
+import zipfile
 
 package_path = Path(__file__).resolve().parent.parent
 data_parent_path = package_path / Path('data')
@@ -57,6 +58,13 @@ def get_data(api_key):
     data_download = f'cd {str(data_path)}; aicrowd dataset download --challenge mosquitoalert-challenge-2023'
     os.system(data_download)
 
+def unpack_data():
+
+    zip_file_path = data_path / Path('train_images.zip')
+
+    with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+        zip_ref.extractall(image_path)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--ai_crowd_api_key', type=str)
@@ -64,6 +72,7 @@ if __name__ == "__main__":
 
     format_data_folder()
     get_data(args.ai_crowd_api_key)
+    unpack_data()
 
     mapping_file_path = package_path / Path('config/mosquito_alert.yaml')
     class_mapping = get_class_mapping(mapping_file_path)
