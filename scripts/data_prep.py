@@ -9,7 +9,7 @@ package_path = Path(__file__).resolve().parent.parent
 data_parent_path = package_path / Path('data')
 data_path = data_parent_path / Path('mosquito_alert_2023')
 image_path = data_path / Path('images')
-label_path = data_path / Path('labels')
+label_path = data_path / Path('labels/train')
 
 def convert_yolo_format(data_frame, class_mapping):
 
@@ -48,7 +48,7 @@ def format_data_folder():
     clean_data = f'rm -rf {str(data_parent_path)}'
     os.system(clean_data)
 
-    create_data_dirs = f'mkdir {str(data_path)} -p; mkdir {str(image_path)}; mkdir {str(label_path)}'
+    create_data_dirs = f'mkdir {str(data_path)} -p; mkdir {str(image_path)} -p; mkdir {str(label_path)} -p'
     os.system(create_data_dirs)
 
 def get_data(api_key):
@@ -63,7 +63,12 @@ def unpack_data():
     zip_file_path = data_path / Path('train_images.zip')
 
     with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
-        zip_ref.extractall(image_path)
+        zip_ref.extractall(image_path / Path('train') )
+
+    zip_file_path = data_path / Path('test_images_phase1.zip')
+
+    with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+        zip_ref.extractall(image_path / Path('test') )
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

@@ -1,8 +1,9 @@
 # Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
+
 path: ../data/mosquito_alert_2023
-train: images
-val: images
-test: # no test images (optional)
+train: images/train
+val: images/train
+test: images/test # optional
 
 # Classes
 names:
@@ -12,5 +13,3 @@ names:
   3: culex
   4: culiseta
   5: japonicus/koreicus
-
-# Add optional download here.
