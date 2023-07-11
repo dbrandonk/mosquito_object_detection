@@ -6,11 +6,13 @@ import zipfile
 import pandas as pd
 import yaml
 
-package_path = Path(__file__).resolve().parent.parent
-data_parent_path = package_path / Path('data')
-data_path = data_parent_path / Path('mosquito_alert_2023')
-image_path = data_path / Path('images')
-label_path = data_path / Path('labels/train')
+PACKAGE_PATH = Path(__file__).resolve().parent.parent
+DATA_ROOT_PATH = PACKAGE_PATH / Path('data')
+DATA_PATH = DATA_ROOT_PATH / Path('mosquito_alert_2023')
+IMAGE_PATH = DATA_PATH / Path('images')
+LABEL_PATH = DATA_PATH / Path('labels/train')
+CLASS_MAPPING_PATH = PACKAGE_PATH / Path('config/mosquito_alert.yaml')
+TRAINING_DATA_PATH = DATA_PATH / Path('train.csv')
 
 
 def convert_yolo_format(data_frame, class_mapping):
@@ -23,15 +25,15 @@ def convert_yolo_format(data_frame, class_mapping):
         width = float(row['bbx_xbr'] - row['bbx_xtl']) / row['img_w']
         height = float(row['bbx_ybr'] - row['bbx_ytl']) / row['img_h']
 
-        with open(label_path / Path(row['img_fName'].split('.')[0] + '.txt'),
-                'w', encoding='utf-8') as file:
+        with open(LABEL_PATH / Path(row['img_fName'].split('.')[0] + '.txt'),
+                  'w', encoding='utf-8') as file:
             file.write(f'{class_label} {x_center} {y_center} {width} {height}\n')
 
 
-def get_class_mapping(mapping_path):
+def get_class_mapping():
 
     try:
-        with open(mapping_path, 'rb') as file:
+        with open(CLASS_MAPPING_PATH, 'rb') as file:
             yaml_data = yaml.safe_load(file)
         classes = {value: key for key, value in yaml_data['names'].items()}
     except FileNotFoundError:
@@ -40,22 +42,13 @@ def get_class_mapping(mapping_path):
     return classes
 
 
-def read_csv(file_path):
+def read_training_data():
     try:
-        data_frame = pd.read_csv(file_path)
+        data_frame = pd.read_csv(TRAINING_DATA_PATH)
     except FileNotFoundError:
         print("File not found.")
 
     return data_frame
-
-
-def format_data_folder():
-
-    clean_data = f'rm -rf {str(data_parent_path)}'
-    os.system(clean_data)
-
-    create_data_dirs = f'mkdir {str(image_path)} -p; mkdir {str(label_path)} -p'
-    os.system(create_data_dirs)
 
 
 def get_data(api_key):
@@ -63,21 +56,30 @@ def get_data(api_key):
     os.system(login)
 
     ai_crowd_cmd = 'aicrowd dataset download --challenge mosquitoalert-challenge-2023'
-    data_download = f'cd {str(data_path)}; {ai_crowd_cmd}'
+    data_download = f'cd {str(DATA_PATH)}; {ai_crowd_cmd}'
     os.system(data_download)
+
+
+def refresh_data_folders():
+
+    clean_data = f'rm -rf {str(DATA_ROOT_PATH)}'
+    os.system(clean_data)
+
+    create_data_dirs = f'mkdir {str(IMAGE_PATH)} -p; mkdir {str(LABEL_PATH)} -p'
+    os.system(create_data_dirs)
 
 
 def unpack_data():
 
-    zip_file_path = data_path / Path('train_images.zip')
+    zip_file_path = DATA_PATH / Path('train_images.zip')
 
     with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
-        zip_ref.extractall(image_path / Path('train'))
+        zip_ref.extractall(IMAGE_PATH / Path('train'))
 
-    zip_file_path = data_path / Path('test_images_phase1.zip')
+    zip_file_path = DATA_PATH / Path('test_images_phase1.zip')
 
     with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
-        zip_ref.extractall(image_path / Path('test'))
+        zip_ref.extractall(IMAGE_PATH / Path('test'))
 
 
 def main():
@@ -85,16 +87,12 @@ def main():
     parser.add_argument('--ai_crowd_api_key', type=str)
     args = parser.parse_args()
 
-    format_data_folder()
+    refresh_data_folders()
     get_data(args.ai_crowd_api_key)
     unpack_data()
 
-    mapping_file_path = package_path / Path('config/mosquito_alert.yaml')
-    class_mapping = get_class_mapping(mapping_file_path)
-
-    csv_file_path = data_path / Path('train.csv')
-    data_frame = read_csv(csv_file_path)
-
+    class_mapping = get_class_mapping()
+    data_frame = read_training_data()
     convert_yolo_format(data_frame, class_mapping)
 
 
