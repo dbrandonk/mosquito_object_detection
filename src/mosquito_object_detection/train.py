@@ -1,3 +1,5 @@
+"""Mosquito object detection yolo training."""
+
 from pathlib import Path
 from ultralytics import YOLO
 
