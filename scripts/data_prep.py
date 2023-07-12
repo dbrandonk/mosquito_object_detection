@@ -1,3 +1,5 @@
+"""A very brittle script that setups up the data (https://www.aicrowd.com/challenges/mosquitoalert-challenge-2023) nicely to use with YOLO."""  # pylint: disable=line-too-long
+
 from pathlib import Path
 import argparse
 import os
@@ -15,7 +17,7 @@ CLASS_MAPPING_PATH = PACKAGE_PATH / Path('config/mosquito_alert.yaml')
 TRAINING_DATA_PATH = DATA_PATH / Path('train.csv')
 
 
-def convert_yolo_format(data_frame, class_mapping):
+def _convert_yolo_format(data_frame, class_mapping):
 
     for _, row in data_frame.iterrows():
 
@@ -30,7 +32,7 @@ def convert_yolo_format(data_frame, class_mapping):
             file.write(f'{class_label} {x_center} {y_center} {width} {height}\n')
 
 
-def get_class_mapping():
+def _get_class_mapping():
 
     try:
         with open(CLASS_MAPPING_PATH, 'rb') as file:
@@ -42,7 +44,7 @@ def get_class_mapping():
     return classes
 
 
-def read_training_data():
+def _read_training_data():
     try:
         data_frame = pd.read_csv(TRAINING_DATA_PATH)
     except FileNotFoundError:
@@ -51,7 +53,7 @@ def read_training_data():
     return data_frame
 
 
-def get_data(api_key):
+def _get_data(api_key):
     login = f'aicrowd login --api-key {api_key}'
     os.system(login)
 
@@ -60,7 +62,7 @@ def get_data(api_key):
     os.system(data_download)
 
 
-def refresh_data_folders():
+def _refresh_data_folders():
 
     clean_data = f'rm -rf {str(DATA_ROOT_PATH)}'
     os.system(clean_data)
@@ -69,7 +71,7 @@ def refresh_data_folders():
     os.system(create_data_dirs)
 
 
-def unpack_data():
+def _unpack_data():
 
     zip_file_path = DATA_PATH / Path('train_images.zip')
 
@@ -82,19 +84,22 @@ def unpack_data():
         zip_ref.extractall(IMAGE_PATH / Path('test'))
 
 
-def main():
+def data_prep():
+    """
+    Prepares the data in a way that YOLO likes.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument('--ai_crowd_api_key', type=str)
     args = parser.parse_args()
 
-    refresh_data_folders()
-    get_data(args.ai_crowd_api_key)
-    unpack_data()
+    _refresh_data_folders()
+    _get_data(args.ai_crowd_api_key)
+    _unpack_data()
 
-    class_mapping = get_class_mapping()
-    data_frame = read_training_data()
-    convert_yolo_format(data_frame, class_mapping)
+    class_mapping = _get_class_mapping()
+    data_frame = _read_training_data()
+    _convert_yolo_format(data_frame, class_mapping)
 
 
 if __name__ == "__main__":
-    main()
+    data_prep()
