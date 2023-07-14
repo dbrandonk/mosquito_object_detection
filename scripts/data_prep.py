@@ -89,7 +89,12 @@ def _get_data(api_key):
 
 def _refresh_data_folders():
 
-    shutil.rmtree(DATA_ROOT_PATH)
+    # remove any data that might be there.
+    try:
+        shutil.rmtree(DATA_ROOT_PATH)
+    except FileNotFoundError:
+        pass
+
     shutil.os.makedirs(TRAIN_IMAGE_PATH)
     shutil.os.makedirs(TRAIN_LABEL_PATH)
     shutil.os.makedirs(VAL_IMAGE_PATH)
