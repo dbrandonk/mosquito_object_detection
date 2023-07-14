@@ -2,9 +2,10 @@
 
 from pathlib import Path
 import argparse
-import os
+import shutil
 import zipfile
 
+import numpy as np
 import pandas as pd
 import yaml
 
@@ -12,14 +13,38 @@ PACKAGE_PATH = Path(__file__).resolve().parent.parent
 DATA_ROOT_PATH = PACKAGE_PATH / Path('data')
 DATA_PATH = DATA_ROOT_PATH / Path('mosquito_alert_2023')
 IMAGE_PATH = DATA_PATH / Path('images')
-LABEL_PATH = DATA_PATH / Path('labels/train')
+TRAIN_IMAGE_PATH = IMAGE_PATH / Path('train')
+TRAIN_LABEL_PATH = DATA_PATH / Path('labels/train')
+VAL_IMAGE_PATH = IMAGE_PATH / Path('val')
+VAL_LABEL_PATH = DATA_PATH / Path('labels/val')
 CLASS_MAPPING_PATH = PACKAGE_PATH / Path('config/mosquito_alert.yaml')
 TRAINING_DATA_PATH = DATA_PATH / Path('train.csv')
+
+TRAIN_ITEM = 0
+VAL_ITEM = 1
+TRAIN_PERCENT = 0.9
+VAL_PERCENT = 0.1
 
 
 def _convert_yolo_format(data_frame, class_mapping):
 
-    for _, row in data_frame.iterrows():
+    # lets have the same split each time.
+    np.random.seed(42)
+    data_split = np.random.choice(
+        [TRAIN_ITEM, VAL_ITEM],
+        size=data_frame.shape[0],
+        p=[TRAIN_PERCENT, VAL_PERCENT])
+
+    for idx, row in data_frame.iterrows():
+
+        if data_split[idx] == TRAIN_ITEM:
+            image_placement_path = TRAIN_IMAGE_PATH
+            label_placement_path = TRAIN_LABEL_PATH
+        else:
+            image_placement_path = VAL_IMAGE_PATH
+            label_placement_path = VAL_LABEL_PATH
+
+        shutil.move(IMAGE_PATH / Path(row['img_fName']), image_placement_path)
 
         class_label = class_mapping[row['class_label']]
         x_center = float(row['bbx_xbr'] + row['bbx_xtl']) / (2 * row['img_w'])
@@ -27,7 +52,7 @@ def _convert_yolo_format(data_frame, class_mapping):
         width = float(row['bbx_xbr'] - row['bbx_xtl']) / row['img_w']
         height = float(row['bbx_ybr'] - row['bbx_ytl']) / row['img_h']
 
-        with open(LABEL_PATH / Path(row['img_fName'].split('.')[0] + '.txt'),
+        with open(label_placement_path / Path(row['img_fName'].split('.')[0] + '.txt'),
                   'w', encoding='utf-8') as file:
             file.write(f'{class_label} {x_center} {y_center} {width} {height}\n')
 
@@ -55,20 +80,20 @@ def _read_training_data():
 
 def _get_data(api_key):
     login = f'aicrowd login --api-key {api_key}'
-    os.system(login)
+    shutil.os.system(login)
 
     ai_crowd_cmd = 'aicrowd dataset download --challenge mosquitoalert-challenge-2023'
     data_download = f'cd {str(DATA_PATH)}; {ai_crowd_cmd}'
-    os.system(data_download)
+    shutil.os.system(data_download)
 
 
 def _refresh_data_folders():
 
-    clean_data = f'rm -rf {str(DATA_ROOT_PATH)}'
-    os.system(clean_data)
-
-    create_data_dirs = f'mkdir {str(IMAGE_PATH)} -p; mkdir {str(LABEL_PATH)} -p'
-    os.system(create_data_dirs)
+    shutil.rmtree(DATA_ROOT_PATH)
+    shutil.os.makedirs(TRAIN_IMAGE_PATH)
+    shutil.os.makedirs(TRAIN_LABEL_PATH)
+    shutil.os.makedirs(VAL_IMAGE_PATH)
+    shutil.os.makedirs(VAL_LABEL_PATH)
 
 
 def _unpack_data():
@@ -76,7 +101,7 @@ def _unpack_data():
     zip_file_path = DATA_PATH / Path('train_images.zip')
 
     with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
-        zip_ref.extractall(IMAGE_PATH / Path('train'))
+        zip_ref.extractall(IMAGE_PATH)
 
     zip_file_path = DATA_PATH / Path('test_images_phase1.zip')
 

@@ -7,9 +7,9 @@
 
 path: ../data/mosquito_alert_2023
 train: images/train
-val: images/train
+val: images/val
 # test optional
-test: images/test
+# test: images/test
 # Classes
 names:
   0: aegypti
