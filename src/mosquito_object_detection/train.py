@@ -7,7 +7,7 @@ from ultralytics import YOLO
 PACKAGE_PATH = Path(__file__).resolve().parent.parent.parent
 
 # load a pretrained model
-model = YOLO(PACKAGE_PATH / Path('checkpoints/yolov8n.pt'))
+model = YOLO(PACKAGE_PATH / Path('weights/yolov8n.pt'))
 
 # train
 model.train(data=(PACKAGE_PATH / Path('config/mosquito_alert.yaml')), epochs=100, imgsz=640)
