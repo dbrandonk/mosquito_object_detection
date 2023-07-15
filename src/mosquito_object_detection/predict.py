@@ -2,6 +2,7 @@
 
 from pathlib import Path
 import csv
+import logging
 import shutil
 
 from ultralytics import YOLO
@@ -27,12 +28,17 @@ with open(SUBMISSION_FILE, 'w', encoding='utf-8') as csv_file:
     image_files = shutil.os.listdir(TEST_IMAGE_PATH)
 
     for image_file in image_files:
-        # predict
-        result = model.predict(TEST_IMAGE_PATH / Path(image_file), max_det=1)
+        try:
+            # predict
+            result = model.predict(TEST_IMAGE_PATH / Path(image_file), max_det=1)
 
-        # gather results
+            # gather results
 
-        xtl, ytl, xbr, ybr = result[0].boxes[0].xyxy[0].tolist()
-        class_label = result[0].names[int(result[0].boxes[0].cls)]
-        height, width = result[0].orig_shape
-        csv_writer.writerow([image_file, width, height, xtl, ytl, xbr, ybr, class_label])
+            xtl, ytl, xbr, ybr = result[0].boxes[0].xyxy[0].tolist()
+            class_label = result[0].names[int(result[0].boxes[0].cls)]
+            height, width = result[0].orig_shape
+            csv_writer.writerow([image_file, width, height, xtl, ytl, xbr, ybr, class_label])
+
+        except Exception:  # pylint: disable=broad-exception-caught
+            logging.warning(  # pylint:disable=logging-fstring-interpolation
+                f'Failed to process image test file: {image_file}')
