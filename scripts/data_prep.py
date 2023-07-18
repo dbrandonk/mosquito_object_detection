@@ -5,7 +5,8 @@ import argparse
 import shutil
 import zipfile
 
-import numpy as np
+from sklearn.model_selection import train_test_split
+from imblearn.over_sampling import RandomOverSampler
 import pandas as pd
 import yaml
 
@@ -26,35 +27,46 @@ TRAIN_PERCENT = 0.9
 VAL_PERCENT = 0.1
 
 
-def _convert_yolo_format(data_frame, class_mapping):
+def _convert_yolo_format(data_frame, class_mapping, balance_data):  # pylint: disable=too-many-locals
 
-    # lets have the same split each time.
-    np.random.seed(42)
-    data_split = np.random.choice(
-        [TRAIN_ITEM, VAL_ITEM],
-        size=data_frame.shape[0],
-        p=[TRAIN_PERCENT, VAL_PERCENT])
+    x_train, x_test = train_test_split(data_frame, test_size=0.1, shuffle=True, random_state=42)
 
-    for idx, row in data_frame.iterrows():
+    if balance_data:
+        target = x_train['class_label']
+        oversampler = RandomOverSampler(random_state=42)
+        x_train, _ = oversampler.fit_resample(x_train, target)
 
-        if data_split[idx] == TRAIN_ITEM:
-            image_placement_path = TRAIN_IMAGE_PATH
-            label_placement_path = TRAIN_LABEL_PATH
-        else:
-            image_placement_path = VAL_IMAGE_PATH
-            label_placement_path = VAL_LABEL_PATH
+    for dataset_idx, dataset in enumerate([x_train, x_test]):
+        for idx, row in dataset.iterrows():
 
-        shutil.move(IMAGE_PATH / Path(row['img_fName']), image_placement_path)
+            if dataset_idx == 0:
+                image_placement_path = TRAIN_IMAGE_PATH
+                label_placement_path = TRAIN_LABEL_PATH
+            else:
+                image_placement_path = VAL_IMAGE_PATH
+                label_placement_path = VAL_LABEL_PATH
 
-        class_label = class_mapping[row['class_label']]
-        x_center = float(row['bbx_xbr'] + row['bbx_xtl']) / (2 * row['img_w'])
-        y_center = float(row['bbx_ybr'] + row['bbx_ytl']) / (2 * row['img_h'])
-        width = float(row['bbx_xbr'] - row['bbx_xtl']) / row['img_w']
-        height = float(row['bbx_ybr'] - row['bbx_ytl']) / row['img_h']
+            shutil.copy(
+                IMAGE_PATH /
+                Path(
+                    row['img_fName']),
+                image_placement_path /
+                Path(f'img{idx}.jpeg'))
 
-        with open(label_placement_path / Path(row['img_fName'].split('.')[0] + '.txt'),
-                  'w', encoding='utf-8') as file:
-            file.write(f'{class_label} {x_center} {y_center} {width} {height}\n')
+            class_label = class_mapping[row['class_label']]
+            x_center = float(row['bbx_xbr'] + row['bbx_xtl']) / (2 * row['img_w'])
+            y_center = float(row['bbx_ybr'] + row['bbx_ytl']) / (2 * row['img_h'])
+            width = float(row['bbx_xbr'] - row['bbx_xtl']) / row['img_w']
+            height = float(row['bbx_ybr'] - row['bbx_ytl']) / row['img_h']
+
+            with open(label_placement_path / Path(f'img{idx}.txt'),
+                      'w', encoding='utf-8') as file:
+                file.write(f'{class_label} {x_center} {y_center} {width} {height}\n')
+
+    # cleaning up
+    for file_name in shutil.os.listdir(IMAGE_PATH):
+        if file_name.endswith('.jpeg'):
+            shutil.os.remove(IMAGE_PATH / Path(file_name))
 
 
 def _get_class_mapping():
@@ -120,6 +132,7 @@ def data_prep():
     """
     parser = argparse.ArgumentParser()
     parser.add_argument('--ai_crowd_api_key', type=str)
+    parser.add_argument('--balance_data', type=bool, default=False)
     args = parser.parse_args()
 
     _refresh_data_folders()
@@ -128,7 +141,7 @@ def data_prep():
 
     class_mapping = _get_class_mapping()
     data_frame = _read_training_data()
-    _convert_yolo_format(data_frame, class_mapping)
+    _convert_yolo_format(data_frame, class_mapping, args.balance_data)
 
 
 if __name__ == "__main__":

@@ -14,8 +14,9 @@ requires-python = ">=3.7"
 
 dependencies = [
     'aicrowd-cli',
-    'numpy',
+    'imbalanced-learn',
     'pandas',
     'pyyaml',
+    'scikit-learn',
     'ultralytics',
 ]
