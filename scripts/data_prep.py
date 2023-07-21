@@ -21,11 +21,6 @@ VAL_LABEL_PATH = DATA_PATH / Path('labels/val')
 CLASS_MAPPING_PATH = PACKAGE_PATH / Path('config/mosquito_alert.yaml')
 TRAINING_DATA_PATH = DATA_PATH / Path('train.csv')
 
-TRAIN_ITEM = 0
-VAL_ITEM = 1
-TRAIN_PERCENT = 0.9
-VAL_PERCENT = 0.1
-
 
 def _convert_yolo_format(data_frame, class_mapping, balance_data):  # pylint: disable=too-many-locals
 
@@ -131,8 +126,8 @@ def data_prep():
     Prepares the data in a way that YOLO likes.
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('--ai_crowd_api_key', type=str)
-    parser.add_argument('--balance_data', type=bool, default=False)
+    parser.add_argument('--ai_crowd_api_key', required=True, type=str)
+    parser.add_argument('--balance_data', required=True, type=bool, default=False)
     args = parser.parse_args()
 
     _refresh_data_folders()
