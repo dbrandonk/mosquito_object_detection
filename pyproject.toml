@@ -17,6 +17,7 @@ dependencies = [
     'imbalanced-learn',
     'pandas',
     'pyyaml',
+    'ray[tune]',
     'scikit-learn',
     'ultralytics',
 ]

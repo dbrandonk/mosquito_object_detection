@@ -24,7 +24,7 @@ TRAINING_DATA_PATH = DATA_PATH / Path('train.csv')
 
 def _convert_yolo_format(data_frame, class_mapping, balance_data):  # pylint: disable=too-many-locals
 
-    x_train, x_test = train_test_split(data_frame, test_size=0.1, shuffle=True, random_state=42)
+    x_train, x_test = train_test_split(data_frame, test_size=0.2, shuffle=True, random_state=42)
 
     if balance_data:
         target = x_train['class_label']
