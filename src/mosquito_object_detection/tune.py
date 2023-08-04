@@ -10,4 +10,4 @@ PACKAGE_PATH = Path(__file__).resolve().parent.parent.parent
 model = YOLO(PACKAGE_PATH / Path('weights/yolov8n.pt'))
 
 # tune
-model.tune(data=(PACKAGE_PATH / Path('config/mosquito_alert.yaml')), grace_period=15, max_samples=20, epochs=100)
+model.tune(data=(PACKAGE_PATH / Path('config/mosquito_alert.yaml')), grace_period=15, max_samples=20, gpu_per_trial=1, epochs=100)
