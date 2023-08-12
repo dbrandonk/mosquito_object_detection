@@ -30,8 +30,8 @@ def main():
 
     train_args = {
         'batch': 16,
-        'close_mosaic': 10,
-        'epochs': 300,
+        'close_mosaic': 0,
+        'epochs': 25,
         'imgsz': 640,
         'lr0': 0.001,
         'optimizer': 'Adam',
@@ -43,7 +43,7 @@ def main():
     model.tune(data=(PACKAGE_PATH / Path('config/mosquito_alert.yaml')),
                gpu_per_trial=1,
                grace_period=10,
-               max_samples=5,
+               max_samples=8,
                space=search_space,
                **train_args
                )
