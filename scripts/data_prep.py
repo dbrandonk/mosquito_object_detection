@@ -127,7 +127,7 @@ def data_prep():
     """
     parser = argparse.ArgumentParser()
     parser.add_argument('--ai_crowd_api_key', required=True, type=str)
-    parser.add_argument('--balance_data', required=True, type=bool, default=False)
+    parser.add_argument('--balance_data', action='store_true')
     args = parser.parse_args()
 
     _refresh_data_folders()
