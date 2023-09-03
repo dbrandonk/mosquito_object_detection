@@ -24,10 +24,12 @@ VAL_CLASSIFICATION_PATH = DATA_PATH / Path('classification/val')
 CLASS_MAPPING_PATH = PACKAGE_PATH / Path('config/mosquito_alert.yaml')
 TRAINING_DATA_PATH = DATA_PATH / Path('phase2_train_v0.csv')
 
+
 def _clean_up():
 
     # cleaning up
     shutil.rmtree(GRAB_IMAGE_PATH)
+
 
 def _convert_yolo_format(data_frame, class_mapping, balance_data):  # pylint: disable=too-many-locals
 
@@ -65,29 +67,35 @@ def _convert_yolo_format(data_frame, class_mapping, balance_data):  # pylint: di
                       'w', encoding='utf-8') as file:
                 file.write(f'{class_label} {x_center} {y_center} {width} {height}\n')
 
-def _org_classification_data(data_frame, class_mapping, balance_data):  # pylint: disable=too-many-locals
+
+def _org_classification_data(data_frame, class_mapping, train_balance_data, val_balance_data):  # pylint: disable=too-many-locals
 
     # lets make all of the sub folders.
     for cls in class_mapping:
 
-        class_label = cls.replace('/', '_') # just in case, otherwise stucture will break.
+        class_label = cls.replace('/', '_')  # just in case, otherwise stucture will break.
 
         # remove any data that might be there.
         try:
-            shutil.rmtree(TRAIN_CLASSIFICATION_PATH/ Path(class_label))
-            shutil.rmtree(VAL_CLASSIFICATION_PATH/ Path(class_label))
+            shutil.rmtree(TRAIN_CLASSIFICATION_PATH / Path(class_label))
+            shutil.rmtree(VAL_CLASSIFICATION_PATH / Path(class_label))
         except FileNotFoundError:
             pass
 
-        shutil.os.makedirs(TRAIN_CLASSIFICATION_PATH/ Path(class_label))
-        shutil.os.makedirs(VAL_CLASSIFICATION_PATH/ Path(class_label))
+        shutil.os.makedirs(TRAIN_CLASSIFICATION_PATH / Path(class_label))
+        shutil.os.makedirs(VAL_CLASSIFICATION_PATH / Path(class_label))
 
     x_train, x_test = train_test_split(data_frame, test_size=0.2, shuffle=True, random_state=42)
 
-    if balance_data:
+    if train_balance_data:
         target = x_train['class_label']
         oversampler = RandomOverSampler(random_state=42)
         x_train, _ = oversampler.fit_resample(x_train, target)
+
+    if val_balance_data:
+        target = x_test['class_label']
+        oversampler = RandomOverSampler(random_state=42)
+        x_test, _ = oversampler.fit_resample(x_test, target)
 
     for dataset_idx, dataset in enumerate([x_train, x_test]):
         for idx, row in dataset.iterrows():
@@ -97,8 +105,16 @@ def _org_classification_data(data_frame, class_mapping, balance_data):  # pylint
             else:
                 image_placement_path = VAL_CLASSIFICATION_PATH
 
-            class_label = row['class_label'].replace('/', '_') # just in case, otherwise stucture will break.
-            shutil.copy(GRAB_IMAGE_PATH / Path( row['img_fName']), image_placement_path / Path(class_label + f'/img{idx}.jpeg'))
+            # just in case, otherwise stucture will break.
+            class_label = row['class_label'].replace('/', '_')
+            shutil.copy(
+                GRAB_IMAGE_PATH /
+                Path(
+                    row['img_fName']),
+                image_placement_path /
+                Path(
+                    class_label +
+                    f'/img{idx}.jpeg'))
 
 
 def _get_class_mapping():
@@ -154,13 +170,15 @@ def _unpack_data():
     with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
         zip_ref.extractall(IMAGE_PATH)
 
+
 def data_prep():
     """
     Prepares the data in a way that YOLO likes.
     """
     parser = argparse.ArgumentParser()
     parser.add_argument('--ai_crowd_api_key', required=True, type=str)
-    parser.add_argument('--balance_data', action='store_true')
+    parser.add_argument('--train_balance_data', action='store_true')
+    parser.add_argument('--val_balance_data', action='store_true')
     args = parser.parse_args()
 
     _refresh_data_folders()
@@ -169,8 +187,12 @@ def data_prep():
 
     class_mapping = _get_class_mapping()
     data_frame = _read_training_data()
-    _convert_yolo_format(data_frame, class_mapping, args.balance_data)
-    _org_classification_data(data_frame, class_mapping, args.balance_data)
+    _convert_yolo_format(data_frame, class_mapping, args.train_balance_data)
+    _org_classification_data(
+        data_frame,
+        class_mapping,
+        args.train_balance_data,
+        args.val_balance_data)
 
     _clean_up()
 
