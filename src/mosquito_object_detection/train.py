@@ -25,7 +25,7 @@ def main():
         'perspective': 2.288614373103448e-05,
         'scale': 0.48552095776791077,
         'shear': 4.727303905928761,
-        'translate': 0.23874463557515493 }
+        'translate': 0.23874463557515493}
 
     # train
     model.train(data=(PACKAGE_PATH / Path('config/mosquito_alert.yaml')),

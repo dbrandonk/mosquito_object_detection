@@ -13,7 +13,12 @@ def main():
     model = YOLO(PACKAGE_PATH / Path('weights/yolov8m-cls.pt'))
 
     # train
-    model.train(data=(PACKAGE_PATH / Path('data/mosquito_alert_2023/classification')), epochs=300, imgsz=640)
+    model.train(
+        data=(
+            PACKAGE_PATH /
+            Path('data/mosquito_alert_2023/classification')),
+        epochs=20,
+        imgsz=640)
 
 
 if __name__ == "__main__":
